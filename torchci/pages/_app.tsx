@@ -19,6 +19,24 @@ function MyApp({ Component, pageProps }: AppProps) {
     track(router, "pageview", {});
   }, [router, router.pathname]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      if (mediaQuery.matches) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      } else {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    };
+
+    handleChange();
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
+
   ReactGA.initialize("G-HZEXJ323ZF");
   return (
     <>

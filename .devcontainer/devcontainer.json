@@ -1,0 +1,7 @@
+{
+  "tasks": {
+    "test": "cd torchci && yarn test",
+    "build": "cd torchci && yarn build",
+    "launch": "cd torchci && yarn dev"
+  }
+}
