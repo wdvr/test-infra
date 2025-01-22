@@ -1,6 +1,6 @@
 import styles from "components/NavBar.module.css";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AiFillGithub } from "react-icons/ai";
 import LoginSection from "./LoginSection";
 
@@ -102,6 +102,20 @@ function NavBar() {
     },
   ];
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  }, [isDarkMode]);
+
   return (
     <div className={styles.navbar}>
       <div>
@@ -173,6 +187,11 @@ function NavBar() {
           </li>
           <li style={{ padding: "0 1rem" }}>
             <LoginSection></LoginSection>
+          </li>
+          <li>
+            <button onClick={toggleTheme}>
+              {isDarkMode ? "Light Mode" : "Dark Mode"}
+            </button>
           </li>
         </ul>
       </div>

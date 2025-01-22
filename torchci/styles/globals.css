@@ -23,23 +23,23 @@ a {
 }
 
 pre {
-  background-color: aliceblue;
+  background-color: var(--pre-background-color);
 }
 
 code {
-  background-color: aliceblue;
+  background-color: var(--code-background-color);
 }
 
 a {
   text-decoration: none;
-  color: #0064cf;
+  color: var(--link-color);
 }
 
 button {
   cursor: pointer;
   display: inline-block;
   font-weight: 400;
-  color: #212529;
+  color: var(--button-text-color);
   text-align: center;
   vertical-align: middle;
   user-select: none;
@@ -48,9 +48,27 @@ button {
 }
 
 .animate-on-click {
-  background-color: white;
+  background-color: var(--animate-on-click-background-color);
 }
 
 .animate-on-click:active {
-  background-color: green;
+  background-color: var(--animate-on-click-active-background-color);
+}
+
+:root {
+  --pre-background-color: aliceblue;
+  --code-background-color: aliceblue;
+  --link-color: #0064cf;
+  --button-text-color: #212529;
+  --animate-on-click-background-color: white;
+  --animate-on-click-active-background-color: green;
+}
+
+[data-theme="dark"] {
+  --pre-background-color: #2d2d2d;
+  --code-background-color: #2d2d2d;
+  --link-color: #1e90ff;
+  --button-text-color: #f8f9fa;
+  --animate-on-click-background-color: #444;
+  --animate-on-click-active-background-color: #555;
 }
