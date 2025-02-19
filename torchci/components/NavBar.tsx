@@ -102,6 +102,17 @@ function NavBar() {
     },
   ];
 
+  const metricsDropdown = [
+    {
+      name: "Metrics",
+      href: "/metrics",
+    },
+    {
+      name: "Alerts",
+      href: "/alerts",
+    },
+  ];
+
   return (
     <div className={styles.navbar}>
       <div>
@@ -150,11 +161,7 @@ function NavBar() {
               Requests
             </Link>
           </li>
-          <li>
-            <Link prefetch={false} href="/metrics">
-              Metrics
-            </Link>
-          </li>
+          <NavBarDropdown title="Metrics" items={metricsDropdown} />
           <li>
             <Link prefetch={false} href="/kpis">
               KPIs
