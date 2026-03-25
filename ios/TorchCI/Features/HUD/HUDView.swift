@@ -31,6 +31,12 @@ struct HUDView: View {
                     quickStatsBar
                 }
 
+                // Category overview (collapsible)
+                if viewModel.hasData && viewModel.state == .loaded {
+                    CategoryOverviewView(viewModel: viewModel)
+                        .background(Color(.tertiarySystemBackground))
+                }
+
                 if let lastRefreshed = viewModel.lastRefreshed {
                     HStack {
                         if viewModel.isAutoRefreshEnabled {

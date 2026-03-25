@@ -63,5 +63,16 @@ Thumbs.db
 # IDE
 .idea/
 *.hmap
+
+# Secrets
 TorchCI/Secrets.plist
 Secrets.plist
+
+# Terraform
+api-gateway/*.tfstate
+api-gateway/*.tfstate.backup
+api-gateway/.terraform/
+api-gateway/*.tfvars
+
+# Fastlane local
+fastlane/.bundle/

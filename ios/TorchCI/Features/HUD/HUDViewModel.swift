@@ -35,6 +35,7 @@ final class HUDViewModel: ObservableObject {
     @Published var showBlockingOnly: Bool = false
     @Published var showNewFailuresOnly: Bool = false
     @Published var hideGreenColumns: Bool = false
+    @Published var selectedCategory: TestCategory?
     @Published var consecutiveFailures: Int = 0
     @Published var failurePatterns: [String] = []
     @Published var isLoadingMore: Bool = false
@@ -161,6 +162,11 @@ final class HUDViewModel: ObservableObject {
         let hasSearch = !searchFilter.isEmpty
 
         return allNames.enumerated().compactMap { index, name in
+            // Category filter: skip jobs not matching selected category
+            if let category = selectedCategory, !category.matches(name) {
+                return nil
+            }
+
             // Hide unstable filter: skip jobs whose name contains "unstable"
             if hideUnstable && name.lowercased().contains("unstable") {
                 return nil
@@ -420,6 +426,72 @@ final class HUDViewModel: ObservableObject {
         showBlockingOnly = false
         showNewFailuresOnly = false
         hideGreenColumns = false
+        selectedCategory = nil
+    }
+
+    func selectCategory(_ category: TestCategory?) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if selectedCategory?.id == category?.id {
+                selectedCategory = nil
+            } else {
+                selectedCategory = category
+            }
+        }
+    }
+
+    // MARK: - Category Health
+
+    /// Computes health summaries for all predefined test categories.
+    var categoryHealthSummaries: [CategoryHealthSummary] {
+        guard let hudData else { return [] }
+        let allNames = hudData.jobNames
+        let rows = hudData.shaGrid
+
+        return TestCategory.allCategories.compactMap { category in
+            // Find job indices matching this category
+            let matchingIndices = allNames.enumerated().compactMap { index, name in
+                category.matches(name) ? index : nil
+            }
+            guard !matchingIndices.isEmpty else { return nil }
+
+            var success = 0, failure = 0, newFail = 0, flaky = 0, pending = 0, total = 0
+            var commitPassRates: [Double] = []
+
+            for row in rows {
+                var commitSuccess = 0, commitTotal = 0
+                for idx in matchingIndices {
+                    guard let job = row.jobs[safe: idx], !job.isEmpty else { continue }
+                    total += 1
+                    commitTotal += 1
+                    if job.isFlaky {
+                        flaky += 1
+                        commitSuccess += 1
+                    } else if job.isSuccess {
+                        success += 1
+                        commitSuccess += 1
+                    } else if job.isFailure {
+                        failure += 1
+                        if job.isNewFailure { newFail += 1 }
+                    } else if job.isPending {
+                        pending += 1
+                    }
+                }
+                if commitTotal > 0 {
+                    commitPassRates.append(Double(commitSuccess) / Double(commitTotal))
+                }
+            }
+
+            return CategoryHealthSummary(
+                category: category,
+                totalJobs: total,
+                successCount: success,
+                failureCount: failure,
+                newFailureCount: newFail,
+                flakyCount: flaky,
+                pendingCount: pending,
+                commitPassRates: commitPassRates
+            )
+        }
     }
 
     // MARK: - Job Organization

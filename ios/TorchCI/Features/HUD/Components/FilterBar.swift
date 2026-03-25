@@ -96,6 +96,11 @@ struct FilterBar: View {
                 }
                 }
 
+                // Test category chips
+                if viewModel.hudData != nil {
+                    CategoryChipsBar(viewModel: viewModel)
+                }
+
                 if hasActiveFilters {
                     HStack(spacing: 8) {
                         HStack(spacing: 4) {
@@ -129,7 +134,7 @@ struct FilterBar: View {
     }
 
     private var hasActiveFilters: Bool {
-        !viewModel.searchFilter.isEmpty || viewModel.showFailuresOnly || viewModel.hideUnstable || viewModel.showBlockingOnly || viewModel.showNewFailuresOnly || viewModel.hideGreenColumns
+        !viewModel.searchFilter.isEmpty || viewModel.showFailuresOnly || viewModel.hideUnstable || viewModel.showBlockingOnly || viewModel.showNewFailuresOnly || viewModel.hideGreenColumns || viewModel.selectedCategory != nil
     }
 
     private func filterChip(label: String, icon: String, isActive: Bool, action: @escaping () -> Void) -> some View {

@@ -926,4 +926,150 @@ final class HUDViewModelTests: XCTestCase {
         viewModel.toggleRegex()
         XCTAssertTrue(viewModel.isRegexEnabled)
     }
+
+    // MARK: - Category Filtering
+
+    func testSelectCategoryFiltersJobsByPattern() async {
+        let json = makeHUDResponseJSON(
+            jobNames: [
+                "trunk / linux-build / test",
+                "trunk / macos-14 / build",
+                "pull / linux-cuda / test",
+                "inductor / cuda12.4 / test",
+            ],
+            rows: [
+                [
+                    (name: "linux-build", conclusion: "success", unstable: false),
+                    (name: "macos-14", conclusion: "success", unstable: false),
+                    (name: "linux-cuda", conclusion: "failure", unstable: false),
+                    (name: "inductor-cuda", conclusion: "success", unstable: false),
+                ],
+            ]
+        )
+        let endpoint = APIEndpoint.hud(repoOwner: "pytorch", repoName: "pytorch", branch: "main", page: 1)
+        mockClient.setResponse(json, for: endpoint.path)
+        await viewModel.loadData()
+
+        // No category selected: all 4 jobs visible
+        XCTAssertEqual(viewModel.filteredJobNames.count, 4)
+
+        // Select Mac category: only 1 job
+        let mac = TestCategory.allCategories.first { $0.id == "mac" }!
+        viewModel.selectCategory(mac)
+        XCTAssertEqual(viewModel.filteredJobNames.count, 1)
+        XCTAssertTrue(viewModel.filteredJobNames[0].contains("macos"))
+
+        // Select Linux category: 2 jobs (linux-build and linux-cuda)
+        let linux = TestCategory.allCategories.first { $0.id == "linux" }!
+        viewModel.selectCategory(linux)
+        XCTAssertEqual(viewModel.filteredJobNames.count, 2)
+
+        // Select Inductor: 1 job
+        let inductor = TestCategory.allCategories.first { $0.id == "inductor" }!
+        viewModel.selectCategory(inductor)
+        XCTAssertEqual(viewModel.filteredJobNames.count, 1)
+        XCTAssertTrue(viewModel.filteredJobNames[0].contains("inductor"))
+
+        // Toggle same category again to deselect
+        viewModel.selectCategory(inductor)
+        XCTAssertNil(viewModel.selectedCategory)
+        XCTAssertEqual(viewModel.filteredJobNames.count, 4)
+    }
+
+    func testClearFilterAlsoClearsCategory() async {
+        let json = makeHUDResponseJSON(
+            jobNames: ["trunk / linux-build / test", "trunk / macos-14 / build"],
+            rows: [
+                [
+                    (name: "linux-build", conclusion: "success", unstable: false),
+                    (name: "macos-14", conclusion: "success", unstable: false),
+                ],
+            ]
+        )
+        let endpoint = APIEndpoint.hud(repoOwner: "pytorch", repoName: "pytorch", branch: "main", page: 1)
+        mockClient.setResponse(json, for: endpoint.path)
+        await viewModel.loadData()
+
+        let mac = TestCategory.allCategories.first { $0.id == "mac" }!
+        viewModel.selectCategory(mac)
+        XCTAssertNotNil(viewModel.selectedCategory)
+        XCTAssertEqual(viewModel.filteredJobNames.count, 1)
+
+        viewModel.clearFilter()
+        XCTAssertNil(viewModel.selectedCategory)
+        XCTAssertEqual(viewModel.filteredJobNames.count, 2)
+    }
+
+    func testCategoryHealthSummaries() async {
+        let json = makeHUDResponseJSON(
+            jobNames: [
+                "trunk / linux-build / test",
+                "trunk / macos-14 / build",
+                "inductor / cuda12.4 / test",
+            ],
+            rows: [
+                [
+                    (name: "linux-build", conclusion: "success", unstable: false),
+                    (name: "macos-14", conclusion: "failure", unstable: false),
+                    (name: "inductor-cuda", conclusion: "success", unstable: false),
+                ],
+                [
+                    (name: "linux-build", conclusion: "success", unstable: false),
+                    (name: "macos-14", conclusion: "success", unstable: false),
+                    (name: "inductor-cuda", conclusion: "failure", unstable: false),
+                ],
+            ]
+        )
+        let endpoint = APIEndpoint.hud(repoOwner: "pytorch", repoName: "pytorch", branch: "main", page: 1)
+        mockClient.setResponse(json, for: endpoint.path)
+        await viewModel.loadData()
+
+        let summaries = viewModel.categoryHealthSummaries
+
+        // Should have summaries for linux, mac, inductor, cuda, trunk
+        let linuxSummary = summaries.first { $0.category.id == "linux" }
+        XCTAssertNotNil(linuxSummary)
+        XCTAssertEqual(linuxSummary?.successCount, 2)
+        XCTAssertEqual(linuxSummary?.failureCount, 0)
+
+        let macSummary = summaries.first { $0.category.id == "mac" }
+        XCTAssertNotNil(macSummary)
+        XCTAssertEqual(macSummary?.successCount, 1)
+        XCTAssertEqual(macSummary?.failureCount, 1)
+
+        let inductorSummary = summaries.first { $0.category.id == "inductor" }
+        XCTAssertNotNil(inductorSummary)
+        XCTAssertEqual(inductorSummary?.successCount, 1)
+        XCTAssertEqual(inductorSummary?.failureCount, 1)
+    }
+
+    func testCategoryWithSearchFilterCombines() async {
+        let json = makeHUDResponseJSON(
+            jobNames: [
+                "trunk / linux-build / test",
+                "trunk / linux-cuda / build",
+                "trunk / macos-14 / test",
+            ],
+            rows: [
+                [
+                    (name: "linux-build", conclusion: "success", unstable: false),
+                    (name: "linux-cuda", conclusion: "success", unstable: false),
+                    (name: "macos-14", conclusion: "success", unstable: false),
+                ],
+            ]
+        )
+        let endpoint = APIEndpoint.hud(repoOwner: "pytorch", repoName: "pytorch", branch: "main", page: 1)
+        mockClient.setResponse(json, for: endpoint.path)
+        await viewModel.loadData()
+
+        // Select Linux: 2 jobs
+        let linux = TestCategory.allCategories.first { $0.id == "linux" }!
+        viewModel.selectCategory(linux)
+        XCTAssertEqual(viewModel.filteredJobNames.count, 2)
+
+        // Add search for "cuda": should narrow to 1
+        viewModel.searchFilter = "cuda"
+        XCTAssertEqual(viewModel.filteredJobNames.count, 1)
+        XCTAssertTrue(viewModel.filteredJobNames[0].contains("cuda"))
+    }
 }

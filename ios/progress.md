@@ -221,3 +221,28 @@ Pages with **zero tests**: PR Detail (3), Build Time (9), vLLM Metrics (11), Uti
 | 5 | `disabled_test_historical` | iOS sends different params (`label`, `platform`, `triaged`) vs web (`repo`) |
 | 9 | `queue_times_historical` | iOS uses different query than web's `queue_time_analysis/queue_time_query` |
 | 25 | `nightly_jobs_red_by_name` | Missing `repo` parameter (minor) |
+
+---
+
+## Feature Work Log
+
+### 2026-03-25: Test Category Filtering & Grouping
+
+**Status:** Complete
+
+Added test category filtering/grouping to the HUD page for at-a-glance health monitoring of test groups across commits.
+
+**New files (4):**
+- `TorchCI/Models/TestCategory.swift` - 10 predefined categories (Mac, Linux, Windows, Inductor, CUDA, ROCm, Trunk, Pull, Periodic, Lint)
+- `TorchCI/Features/HUD/Components/CategoryChipsBar.swift` - Quick filter chips
+- `TorchCI/Features/HUD/Components/CategoryOverviewView.swift` - Collapsible overview with pass rates, sparklines, trends
+- `TorchCITests/Models/TestCategoryTests.swift` - 17 unit tests
+
+**Modified files:**
+- `HUDViewModel.swift` - Category state, filtering, health computation
+- `FilterBar.swift` - Category chips integration
+- `HUDView.swift` - Category overview placement
+- `HUDViewModelTests.swift` - 4 category integration tests
+- `.gitignore` - terraform state, fastlane bundle
+
+**Tests:** 21 new tests, 0 failures
